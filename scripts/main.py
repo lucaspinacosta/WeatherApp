@@ -8,25 +8,81 @@ import requests
 from PyQt5.QtCore import QRectF, QSize, Qt, QTimer
 from PyQt5.QtGui import (QBrush, QColor, QFont, QIcon, QLinearGradient,
                          QPainter, QPainterPath, QPalette, QPixmap)
-from PyQt5.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
-                             QLineEdit, QPushButton, QScrollArea, QSizePolicy,
+from PyQt5.QtWidgets import (QApplication, QDialog, QFormLayout, QFrame,
+                             QHBoxLayout, QLabel, QLineEdit, QMessageBox,
+                             QPushButton, QScrollArea, QSizePolicy, QSpinBox,
                              QVBoxLayout, QWidget)
 
 config = configparser.ConfigParser()
 config.read('config/config.ini')
-api_key = config.get('openweathermap', 'api_key')
-city_location = config.get(
-    'default_city', 'city_location', fallback='London, GB')
-update_interval = config.getint(
-    'refresh', 'update_interval', fallback=600)
+
+
+class SettingsWindow(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Settings')
+        self.config = configparser.ConfigParser()
+        self.config.read('config/config.ini')
+        self.initUI()
+
+    def initUI(self):
+        layout = QFormLayout()
+
+        # API Key
+        self.api_key_input = QLineEdit(self)
+        self.api_key_input.setText(
+            self.config.get('openweathermap', 'api_key'))
+        layout.addRow('API Key:', self.api_key_input)
+
+        # Default City
+        self.city_input = QLineEdit(self)
+        self.city_input.setText(self.config.get(
+            'default_city', 'city_location', fallback='London, UK'))
+        layout.addRow('Default City:', self.city_input)
+
+        # Update Interval
+        self.update_interval_input = QSpinBox(self)
+        self.update_interval_input.setRange(
+            60, 86400)  # Between 1 minute and 24 hours
+        self.update_interval_input.setValue(
+            self.config.getint('refresh', 'update_interval', fallback=600)
+        )
+        layout.addRow('Update Interval (seconds):', self.update_interval_input)
+
+        # Buttons
+        buttons_layout = QHBoxLayout()
+        self.save_button = QPushButton('Save', self)
+        self.save_button.clicked.connect(self.save_settings)
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.clicked.connect(self.close)
+        buttons_layout.addWidget(self.save_button)
+        buttons_layout.addWidget(self.cancel_button)
+
+        layout.addRow(buttons_layout)
+        self.setLayout(layout)
+
+    def save_settings(self):
+        # Update the config object
+        self.config.set('openweathermap', 'api_key', self.api_key_input.text())
+        self.config.set('default_city', 'city_location',
+                        self.city_input.text())
+        self.config.set('refresh', 'update_interval', str(
+            self.update_interval_input.value()))
+
+        # Write changes to the config.ini file
+        with open('config/config.ini', 'w') as configfile:
+            self.config.write(configfile)
+
+        # Inform the user
+        QMessageBox.information(
+            self, 'Settings', 'Settings have been saved.')
+        self.accept()
 
 
 class WeatherApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.update_interval = update_interval
-        self.api_key = api_key
-        self.city_location = city_location
+        self.load_config()
         self.current_city = None
         self.first_load = True
         self._debugging = False
@@ -37,6 +93,15 @@ class WeatherApp(QWidget):
         self.timer.timeout.connect(self.refresh_weather)
         # Convert seconds to milliseconds
         self.timer.start(self.update_interval * 1000)
+
+    def load_config(self):
+        self.config = configparser.ConfigParser()
+        self.config.read('config/config.ini')
+        self.api_key = self.config.get('openweathermap', 'api_key')
+        self.city_location = self.config.get(
+            'default_city', 'city_location', fallback='London, UK')
+        self.update_interval = self.config.getint(
+            'refresh', 'update_interval', fallback=600)  # In seconds
 
     def initUI(self):
         self.setWindowTitle('Weather App')
@@ -70,10 +135,33 @@ class WeatherApp(QWidget):
             """
         )
 
-        # Set the icon
-        icon = QIcon('icons/research.png')
-        self.get_weather_btn.setIcon(icon)
+        # Set the search icon
+        search_icon = QIcon('icons/research.png')
+        self.get_weather_btn.setIcon(search_icon)
         self.get_weather_btn.setIconSize(QSize(24, 24))
+
+        # Button to open settings
+        self.settings_btn = QPushButton('', self)
+        self.settings_btn.clicked.connect(self.open_settings)
+        self.settings_btn.setFixedSize(40, 40)
+        self.settings_btn.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #FFA500;
+                border: none;
+                border-radius: 20px;
+            }
+            QPushButton:hover {
+                background-color: #FF8C00;
+            }
+            """
+        )
+
+        # Set the settings icon
+        # You need to have a settings icon in the icons folder
+        settings_icon = QIcon('icons/settings.png')
+        self.settings_btn.setIcon(settings_icon)
+        self.settings_btn.setIconSize(QSize(24, 24))
 
         # Label to display the weather information
         self.weather_info = QLabel('', self)
@@ -85,10 +173,11 @@ class WeatherApp(QWidget):
         self.icon_label = QLabel('', self)
         self.icon_label.setAlignment(Qt.AlignCenter)
 
-        # Create a horizontal layout for the input field and button
+        # Create a horizontal layout for the input field and buttons
         search_layout = QHBoxLayout()
         search_layout.addWidget(self.city_input)
         search_layout.addWidget(self.get_weather_btn)
+        search_layout.addWidget(self.settings_btn)
         search_layout.setSpacing(10)
         search_layout.setContentsMargins(10, 10, 10, 0)
 
@@ -227,7 +316,7 @@ class WeatherApp(QWidget):
 
                     # Format the weather details
                     weather_details = (
-                        f"<b>Temperature:</b> {int(temp)}°C<br>"
+                        f"<b>Temperature:</b> {temp}°C<br>"
                         f"<b>Description:</b> {description.title()}<br>"
                         f"<b>Humidity:</b> {humidity}%<br>"
                         f"<b>Wind Speed:</b> {wind_speed} m/s"
@@ -241,15 +330,15 @@ class WeatherApp(QWidget):
                             self.api_key}&units=metric'
                     )
                     if self._debugging:
-                        print(f"Forecast URL: {forecast_url}")
+                        print(f"Forecast URL: {forecast_url}")  # Debugging
 
                     forecast_response = requests.get(forecast_url)
 
                     if self._debugging:
                         print(f"Forecast Response Status Code: {
-                              forecast_response.status_code}")
+                              forecast_response.status_code}")  # Debugging
                         print(f"Forecast Response Text: {
-                              forecast_response.text}")
+                              forecast_response.text}")  # Debugging
 
                     if forecast_response.status_code == 200:
                         forecast_data = forecast_response.json()
@@ -419,6 +508,18 @@ class WeatherApp(QWidget):
         day_frame.setStyleSheet("")
 
         self.forecast_layout.addWidget(day_frame)
+
+    def open_settings(self):
+        settings_window = SettingsWindow(self)
+        if settings_window.exec_():
+            # Reload configurations
+            self.load_config()
+            # Restart the timer with the new interval
+            self.timer.stop()
+            self.timer.start(self.update_interval * 1000)
+            # Refresh the weather data
+            self.first_load = True  # Force reload of default city
+            self.show_weather()
 
     def paintEvent(self, event):
         # Overriding paintEvent to handle transparency
