@@ -316,7 +316,7 @@ class WeatherApp(QWidget):
 
                     # Format the weather details
                     weather_details = (
-                        f"<b>Temperature:</b> {temp}°C<br>"
+                        f"<b>Temperature:</b> {int(temp)}°C<br>"
                         f"<b>Description:</b> {description.title()}<br>"
                         f"<b>Humidity:</b> {humidity}%<br>"
                         f"<b>Wind Speed:</b> {wind_speed} m/s"
