@@ -94,7 +94,7 @@ update_interval = 600  # Update interval in seconds (e.g., 600 seconds = 10 minu
 ### Running the Application
 
 ```bash
-python scripts/weather_app.py
+python scripts/main.py
 ```
 
 _Make sure you are in the root directory of the project and the virtual environment (if created) is activated._
@@ -112,7 +112,7 @@ _Make sure you are in the root directory of the project and the virtual environm
 
 ## Dependencies
 
-- **Python 3.10+**
+- **Python 3.11+**
 - **PyQt5**: Python bindings for the Qt cross-platform application framework.
 - **requests**: Library for making HTTP requests.
 - **configparser**: Used for handling the configuration file.
@@ -134,7 +134,7 @@ weather-app/
 ├── docs/
 │   └── screenshot.png
 ├── scripts/
-│   └── weather_app.py
+│   └── main.py
 ├── requirements.txt
 └── README.md
 ```
@@ -143,7 +143,7 @@ weather-app/
 - **icons/**: Holds icon images used in the application.
 - **docs/**: Documentation and screenshots.
 - **scripts/**: Holds scripts.
-- **weather_app.py**: The main application script.
+- **main.py**: The main application script.
 - **requirements.txt**: List of Python dependencies.
 - **README.md**: This readme file.
 
