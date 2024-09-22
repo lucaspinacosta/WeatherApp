@@ -1,6 +1,7 @@
 #! venv/bin/ python3.12
 
 import configparser
+import os
 import sys
 from datetime import datetime
 
@@ -13,8 +14,20 @@ from PyQt5.QtWidgets import (QApplication, QDialog, QFormLayout, QFrame,
                              QPushButton, QScrollArea, QSizePolicy, QSpinBox,
                              QVBoxLayout, QWidget)
 
+
+def resource_path(relative_path):
+    """ Get the absolute path to the resource, works for dev and PyInstaller """
+    try:
+        # PyInstaller creates a temporary folder and stores the path in _MEIPASS
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
+
+
 config = configparser.ConfigParser()
-config.read('config/config.ini')
+config_path = resource_path('config/config.ini')
+config.read(config_path)
 
 
 class SettingsWindow(QDialog):
@@ -22,7 +35,9 @@ class SettingsWindow(QDialog):
         super().__init__(parent)
         self.setWindowTitle('Settings')
         self.config = configparser.ConfigParser()
-        self.config.read('config/config.ini')
+        config_path = resource_path('config/config.ini')
+        self.config.read(config_path)
+
         self.initUI()
 
     def initUI(self):
@@ -70,7 +85,9 @@ class SettingsWindow(QDialog):
             self.update_interval_input.value()))
 
         # Write changes to the config.ini file
-        with open('config/config.ini', 'w') as configfile:
+        config_path = resource_path('config/config.ini')
+
+        with open(config_path, 'w') as configfile:
             self.config.write(configfile)
 
         # Inform the user
@@ -96,7 +113,8 @@ class WeatherApp(QWidget):
 
     def load_config(self):
         self.config = configparser.ConfigParser()
-        self.config.read('config/config.ini')
+        config_path = resource_path('config/config.ini')
+        self.config.read(config_path)
         self.api_key = self.config.get('openweathermap', 'api_key')
         self.city_location = self.config.get(
             'default_city', 'city_location', fallback='London, UK')
@@ -136,7 +154,7 @@ class WeatherApp(QWidget):
         )
 
         # Set the search icon
-        search_icon = QIcon('icons/research.png')
+        search_icon = QIcon(resource_path('icons/research.png'))
         self.get_weather_btn.setIcon(search_icon)
         self.get_weather_btn.setIconSize(QSize(24, 24))
 
@@ -159,7 +177,7 @@ class WeatherApp(QWidget):
 
         # Set the settings icon
         # You need to have a settings icon in the icons folder
-        settings_icon = QIcon('icons/settings.png')
+        settings_icon = QIcon(resource_path('icons/settings.png'))
         self.settings_btn.setIcon(settings_icon)
         self.settings_btn.setIconSize(QSize(24, 24))
 
