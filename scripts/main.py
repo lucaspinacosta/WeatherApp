@@ -227,7 +227,7 @@ class WeatherApp(QWidget):
 
                     # Format the weather details
                     weather_details = (
-                        f"<b>Temperature:</b> {temp}°C<br>"
+                        f"<b>Temperature:</b> {int(temp)}°C<br>"
                         f"<b>Description:</b> {description.title()}<br>"
                         f"<b>Humidity:</b> {humidity}%<br>"
                         f"<b>Wind Speed:</b> {wind_speed} m/s"
@@ -320,7 +320,7 @@ class WeatherApp(QWidget):
 
     def display_hourly_forecast(self, forecast_list):
         # Get current time
-        now = datetime.utcnow()
+        now = datetime.now()
 
         # Find entries for the next 5 hours
         hourly_forecasts = []
