@@ -7,7 +7,7 @@ from datetime import datetime
 
 import requests
 from PyQt5.QtCore import QRectF, QSize, Qt, QTimer
-from PyQt5.QtGui import (QBrush, QColor, QFont, QIcon, QLinearGradient,
+from PyQt5.QtGui import (QBrush, QColor, QFont, QIcon, QLinearGradient, QMovie,
                          QPainter, QPainterPath, QPalette, QPixmap)
 from PyQt5.QtWidgets import (QApplication, QDialog, QFormLayout, QFrame,
                              QHBoxLayout, QLabel, QLineEdit, QMessageBox,
@@ -28,6 +28,30 @@ def resource_path(relative_path):
 config = configparser.ConfigParser()
 config_path = resource_path('config/config.ini')
 config.read(config_path)
+
+
+class AnimatedLabel(QLabel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.movie = None
+
+    def setMovie(self, movie):
+        self.movie = movie
+        super().setMovie(movie)
+        self.movie.frameChanged.connect(self.update_frame)
+
+    def update_frame(self):
+        frame = self.movie.currentPixmap()
+        if not frame.isNull():
+            # Scale the frame to the size of the label, maintaining aspect ratio
+            scaled_frame = frame.scaled(
+                self.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.setPixmap(scaled_frame)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.movie and self.movie.state() == QMovie.Running:
+            self.update_frame()
 
 
 class SettingsWindow(QDialog):
