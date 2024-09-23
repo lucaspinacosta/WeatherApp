@@ -81,6 +81,8 @@ target/
 # init file
 *.ini
 
+# vscode editor
+.vscode/
 # IPython
 profile_default/
 ipython_config.py

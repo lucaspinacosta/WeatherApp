@@ -1,4 +1,4 @@
-#! venv/bin/ python3.12
+#! venv/bin/ python3.10
 
 import configparser
 import os
@@ -83,9 +83,8 @@ class SettingsWindow(QDialog):
         self.update_interval_input = QSpinBox(self)
         self.update_interval_input.setRange(
             60, 86400)  # Between 1 minute and 24 hours
-        self.update_interval_input.setValue(
-            self.config.getint('refresh', 'update_interval', fallback=600)
-        )
+        self.update_interval_input.setValue(self.config.getint(
+            'refresh', 'update_interval', fallback=600))
         layout.addRow('Update Interval (seconds):', self.update_interval_input)
 
         # Buttons
@@ -115,8 +114,7 @@ class SettingsWindow(QDialog):
             self.config.write(configfile)
 
         # Inform the user
-        QMessageBox.information(
-            self, 'Settings', 'Settings have been saved.')
+        QMessageBox.information(self, 'Settings', 'Settings have been saved.')
         self.accept()
 
 
@@ -312,6 +310,10 @@ class WeatherApp(QWidget):
         self.updateGradientBackground()
 
     def show_weather(self):
+        if self._debugging:
+            print(f"{self.api_key}")
+            # self._debugging = False
+
         if self.first_load:
             self.first_load = False
             self.current_city = self.city_location
@@ -325,8 +327,7 @@ class WeatherApp(QWidget):
         if city:
             # Get coordinates of the city
             geo_url = (
-                f'http://api.openweathermap.org/geo/1.0/direct'
-                f'?q={city}&limit=1&appid={self.api_key}'
+                f'http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=1&appid={self.api_key}'
             )
             geo_response = requests.get(geo_url)
             if geo_response.status_code == 200 and geo_response.json():
@@ -336,8 +337,7 @@ class WeatherApp(QWidget):
 
                 # Fetch current weather data
                 weather_url = (
-                    f'http://api.openweathermap.org/data/2.5/weather'
-                    f'?lat={lat}&lon={lon}&appid={self.api_key}&units=metric'
+                    f'http://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={self.api_key}&units=metric'
                 )
                 weather_response = requests.get(weather_url)
                 if weather_response.status_code == 200:
@@ -349,8 +349,7 @@ class WeatherApp(QWidget):
                     wind_speed = weather_data['wind']['speed']
 
                     # Fetch the weather icon
-                    icon_url = f'http://openweathermap.org/img/wn/{
-                        icon_code}@2x.png'
+                    icon_url = f'http://openweathermap.org/img/wn/{icon_code}@2x.png'
                     icon_response = requests.get(icon_url)
                     pixmap = QPixmap()
                     pixmap.loadFromData(icon_response.content)
@@ -367,9 +366,7 @@ class WeatherApp(QWidget):
 
                     # Fetch 5-day forecast data
                     forecast_url = (
-                        f'http://api.openweathermap.org/data/2.5/forecast'
-                        f'?lat={lat}&lon={lon}&appid={
-                            self.api_key}&units=metric'
+                        f'http://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={self.api_key}&units=metric'
                     )
                     if self._debugging:
                         print(f"Forecast URL: {forecast_url}")  # Debugging
@@ -377,10 +374,12 @@ class WeatherApp(QWidget):
                     forecast_response = requests.get(forecast_url)
 
                     if self._debugging:
-                        print(f"Forecast Response Status Code: {
-                              forecast_response.status_code}")  # Debugging
-                        print(f"Forecast Response Text: {
-                              forecast_response.text}")  # Debugging
+                        # Debugging
+                        print(
+                            f"Forecast Response Status Code: {forecast_response.status_code}")
+                        # Debugging
+                        print(
+                            f"Forecast Response Text: {forecast_response.text}")
 
                     if forecast_response.status_code == 200:
                         forecast_data = forecast_response.json()
@@ -433,8 +432,8 @@ class WeatherApp(QWidget):
                             f'Error fetching forecast data: {error_message}')
 
                         if self._debugging:
-                            print(f"Error fetching forecast data: {
-                                  error_message}")
+                            print(
+                                f"Error fetching forecast data: {error_message}")
                 else:
                     self.weather_info.setText('Error fetching weather data.')
                     self.icon_label.clear()
